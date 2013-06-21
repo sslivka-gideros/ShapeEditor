@@ -52,7 +52,7 @@ function shapeEditor:run()
 	local vCopy = table.copy(v)
 	local t = {}
 	self.canvas.trianglesContour:clear()
-	self.canvas.trianglesContour:setLineStyle(1, 0x000000, 1)
+	self.canvas.trianglesContour:setLineStyle(1, 0x2F2F2F, 1)
 	self.canvas.trianglesContour:beginPath()
 	local v1, v2, v3 = 1, 2, 3
 	while #vCopy > 3 do
@@ -70,8 +70,8 @@ function shapeEditor:run()
 			success = false
 		end
 		if success then
-			self.canvas.trianglesContour:moveTo(vCopy[v1].x - 1, vCopy[v1].y - 1)
-			self.canvas.trianglesContour:lineTo(vCopy[v3].x - 1, vCopy[v3].y - 1)
+			self.canvas.trianglesContour:moveTo(vCopy[v1].x, vCopy[v1].y)
+			self.canvas.trianglesContour:lineTo(vCopy[v3].x, vCopy[v3].y)
 			t[#t + 1] = self:ckw({vCopy[v1], vCopy[v2], vCopy[v3]})
 			table.remove(vCopy, v2)
 		end
@@ -103,16 +103,34 @@ function shapeEditor:run()
 	end
 end
 
+function shapeEditor.openImage(path)
+	shapeEditor.canvas.img:setTexture(Texture.new(path, true))
+	shapeEditor.canvas:setPosition(application:getDeviceWidth()/2 - shapeEditor.canvas:getWidth()/2, 75)
+	shapeEditor.canvas.ap:setPosition((apx or 0)*shapeEditor.canvas.img:getWidth(),
+		(apy or 0)*shapeEditor.canvas.img:getHeight())
+	while shapeEditor.canvas.vertices:getNumChildren() > 0 do
+		shapeEditor.canvas.vertices:getChildAt(1):removeFromParent()
+	end
+	shapeEditor.canvas.polygonContour:draw()
+	shapeEditor.canvas.trianglesContour:clear()
+end
+
 shapeEditor.toolBar = Sprite.new()
 function shapeEditor.toolBar:init()
 	self.btnOpen = Bitmap.new(Texture.new("open.png", true))
 	self.btnOpen:setPosition(0, 0)
 	self.btnOpen:addEventListener(Event.MOUSE_DOWN, function(self, e)
 		if self:hitTestPoint(e.x, e.y) then
-			local textInputDialog = TextInputDialog.new("Open file", "File name:", "c:\\imgs\\star.png", "Cancel", "OK")
+			local textInputDialog = TextInputDialog.new("Open file", "File name:", shapeEditor.canvas.img.path or "c:\\imgs\\star.png", "Cancel", "OK")
 			textInputDialog:addEventListener(Event.COMPLETE, function(self, e)
 				if e.buttonText == "OK" then
-					assert(loadstring("shapeEditor.canvas:openImage(\"" .. string.gsub(e.text, "\\", "\\\\") .. "\")"))()
+					local ok, ret = pcall(shapeEditor.openImage, string.gsub(e.text, "\\", "\\\\"))
+					if ok then
+						shapeEditor.canvas.img.path = e.text
+					else
+						local alertDialog = AlertDialog.new("Error", e.text .. " - file not found", "OK")
+						alertDialog:show()
+					end
 				end
 			end, textInputDialog)
 			textInputDialog:show()
@@ -282,10 +300,6 @@ function shapeEditor.canvas:init()
 			end
 		end
 	end, self)
-end
-function shapeEditor.canvas:openImage(path)
-	self.img:setTexture(Texture.new(path, true))
-	shapeEditor.canvas:setPosition(application:getDeviceWidth()/2 - shapeEditor.canvas:getWidth()/2, 75)	
 end
 shapeEditor.canvas:init()
 
