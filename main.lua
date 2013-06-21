@@ -44,7 +44,7 @@ function table.copy(t)
 end
 
 function shapeEditor:run()
-	if self.canvas.vertices:getNumChildren() <= 0 then return end
+	if self.canvas.vertices:getNumChildren() < 3 then return end
 	local v = {}
 	for i = 1, self.canvas.vertices:getNumChildren() do
 		v[#v + 1] = {x = self.canvas.vertices:getChildAt(i):getX(), y = self.canvas.vertices:getChildAt(i):getY()}
